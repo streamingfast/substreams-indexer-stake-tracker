@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package allocations.types.v1;
+
+message StakedTokensChange {
+  string indexer = 1;
+  uint64 blockNumber = 2;
+  string tokens = 3; //big.Int
+}
+
+message StakedTokensChanges {
+  repeated StakedTokensChange stakedTokensChanges = 1;
+}
+
+message AllocationClosedData {
+  string address = 1;
+  string deploymentId = 2;
+  string tokens = 3; //big.Int
+  string allocationId = 4;
+  string poi = 5;
+}
+
+message AllocationClosedDatas {
+  repeated AllocationClosedData allocationClosedDatas = 1;
+}
+
+message AllocationClosedResult {
+  string address = 1;
+  string allocationId = 2;
+  string tokens = 3; //big.Int
+  string stake = 5; //big.Int
+}

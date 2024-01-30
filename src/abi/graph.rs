@@ -3642,7 +3642,7 @@
     pub mod events {
         use super::INTERNAL_ERR;
         #[derive(Debug, Clone, PartialEq)]
-        pub struct AllocationClosed {
+        pub struct AllocationClosed1 {
             pub indexer: Vec<u8>,
             pub subgraph_deployment_id: [u8; 32usize],
             pub epoch: substreams::scalar::BigInt,
@@ -3652,7 +3652,7 @@
             pub poi: [u8; 32usize],
             pub is_public: bool,
         }
-        impl AllocationClosed {
+        impl AllocationClosed1 {
             const TOPIC_ID: [u8; 32] = [
                 246u8,
                 114u8,
@@ -3809,8 +3809,199 @@
                 })
             }
         }
-        impl substreams_ethereum::Event for AllocationClosed {
-            const NAME: &'static str = "AllocationClosed";
+        impl substreams_ethereum::Event for AllocationClosed1 {
+            const NAME: &'static str = "AllocationClosed1";
+            fn match_log(log: &substreams_ethereum::pb::eth::v2::Log) -> bool {
+                Self::match_log(log)
+            }
+            fn decode(
+                log: &substreams_ethereum::pb::eth::v2::Log,
+            ) -> Result<Self, String> {
+                Self::decode(log)
+            }
+        }
+        #[derive(Debug, Clone, PartialEq)]
+        pub struct AllocationClosed2 {
+            pub indexer: Vec<u8>,
+            pub subgraph_deployment_id: [u8; 32usize],
+            pub epoch: substreams::scalar::BigInt,
+            pub tokens: substreams::scalar::BigInt,
+            pub allocation_id: Vec<u8>,
+            pub effective_allocation: substreams::scalar::BigInt,
+            pub sender: Vec<u8>,
+            pub poi: [u8; 32usize],
+            pub is_public: bool,
+        }
+        impl AllocationClosed2 {
+            const TOPIC_ID: [u8; 32] = [
+                114u8,
+                3u8,
+                255u8,
+                166u8,
+                144u8,
+                44u8,
+                76u8,
+                42u8,
+                133u8,
+                172u8,
+                38u8,
+                18u8,
+                50u8,
+                20u8,
+                96u8,
+                250u8,
+                32u8,
+                226u8,
+                154u8,
+                151u8,
+                44u8,
+                39u8,
+                46u8,
+                206u8,
+                223u8,
+                223u8,
+                149u8,
+                249u8,
+                68u8,
+                97u8,
+                98u8,
+                105u8,
+            ];
+            pub fn match_log(log: &substreams_ethereum::pb::eth::v2::Log) -> bool {
+                if log.topics.len() != 4usize {
+                    return false;
+                }
+                if log.data.len() != 192usize {
+                    return false;
+                }
+                return log.topics.get(0).expect("bounds already checked").as_ref()
+                    == Self::TOPIC_ID;
+            }
+            pub fn decode(
+                log: &substreams_ethereum::pb::eth::v2::Log,
+            ) -> Result<Self, String> {
+                let mut values = ethabi::decode(
+                        &[
+                            ethabi::ParamType::Uint(256usize),
+                            ethabi::ParamType::Uint(256usize),
+                            ethabi::ParamType::Uint(256usize),
+                            ethabi::ParamType::Address,
+                            ethabi::ParamType::FixedBytes(32usize),
+                            ethabi::ParamType::Bool,
+                        ],
+                        log.data.as_ref(),
+                    )
+                    .map_err(|e| format!("unable to decode log.data: {:?}", e))?;
+                values.reverse();
+                Ok(Self {
+                    indexer: ethabi::decode(
+                            &[ethabi::ParamType::Address],
+                            log.topics[1usize].as_ref(),
+                        )
+                        .map_err(|e| {
+                            format!(
+                                "unable to decode param 'indexer' from topic of type 'address': {:?}",
+                                e
+                            )
+                        })?
+                        .pop()
+                        .expect(INTERNAL_ERR)
+                        .into_address()
+                        .expect(INTERNAL_ERR)
+                        .as_bytes()
+                        .to_vec(),
+                    subgraph_deployment_id: {
+                        let mut result = [0u8; 32];
+                        let v = ethabi::decode(
+                                &[ethabi::ParamType::FixedBytes(32usize)],
+                                log.topics[2usize].as_ref(),
+                            )
+                            .map_err(|e| {
+                                format!(
+                                    "unable to decode param 'subgraph_deployment_id' from topic of type 'bytes32': {:?}",
+                                    e
+                                )
+                            })?
+                            .pop()
+                            .expect(INTERNAL_ERR)
+                            .into_fixed_bytes()
+                            .expect(INTERNAL_ERR);
+                        result.copy_from_slice(&v);
+                        result
+                    },
+                    allocation_id: ethabi::decode(
+                            &[ethabi::ParamType::Address],
+                            log.topics[3usize].as_ref(),
+                        )
+                        .map_err(|e| {
+                            format!(
+                                "unable to decode param 'allocation_id' from topic of type 'address': {:?}",
+                                e
+                            )
+                        })?
+                        .pop()
+                        .expect(INTERNAL_ERR)
+                        .into_address()
+                        .expect(INTERNAL_ERR)
+                        .as_bytes()
+                        .to_vec(),
+                    epoch: {
+                        let mut v = [0 as u8; 32];
+                        values
+                            .pop()
+                            .expect(INTERNAL_ERR)
+                            .into_uint()
+                            .expect(INTERNAL_ERR)
+                            .to_big_endian(v.as_mut_slice());
+                        substreams::scalar::BigInt::from_unsigned_bytes_be(&v)
+                    },
+                    tokens: {
+                        let mut v = [0 as u8; 32];
+                        values
+                            .pop()
+                            .expect(INTERNAL_ERR)
+                            .into_uint()
+                            .expect(INTERNAL_ERR)
+                            .to_big_endian(v.as_mut_slice());
+                        substreams::scalar::BigInt::from_unsigned_bytes_be(&v)
+                    },
+                    effective_allocation: {
+                        let mut v = [0 as u8; 32];
+                        values
+                            .pop()
+                            .expect(INTERNAL_ERR)
+                            .into_uint()
+                            .expect(INTERNAL_ERR)
+                            .to_big_endian(v.as_mut_slice());
+                        substreams::scalar::BigInt::from_unsigned_bytes_be(&v)
+                    },
+                    sender: values
+                        .pop()
+                        .expect(INTERNAL_ERR)
+                        .into_address()
+                        .expect(INTERNAL_ERR)
+                        .as_bytes()
+                        .to_vec(),
+                    poi: {
+                        let mut result = [0u8; 32];
+                        let v = values
+                            .pop()
+                            .expect(INTERNAL_ERR)
+                            .into_fixed_bytes()
+                            .expect(INTERNAL_ERR);
+                        result.copy_from_slice(&v);
+                        result
+                    },
+                    is_public: values
+                        .pop()
+                        .expect(INTERNAL_ERR)
+                        .into_bool()
+                        .expect(INTERNAL_ERR),
+                })
+            }
+        }
+        impl substreams_ethereum::Event for AllocationClosed2 {
+            const NAME: &'static str = "AllocationClosed2";
             fn match_log(log: &substreams_ethereum::pb::eth::v2::Log) -> bool {
                 Self::match_log(log)
             }

@@ -5,5 +5,8 @@ fn main() -> Result<(), anyhow::Error> {
     Abigen::new("graph", "abi/graph.json")?
         .generate()?
         .write_to_file("src/abi/graph.rs")?;
+    Abigen::new("rewards", "abi/rewards.json")?
+        .generate()?
+        .write_to_file("src/abi/rewards.rs")?;
     Ok(())
 }
