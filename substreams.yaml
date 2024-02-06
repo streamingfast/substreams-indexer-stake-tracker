@@ -4,7 +4,7 @@ package:
   version: v0.0.1
   url: https://none.com
   doc: |
-    This Substreams tracks changes in total staked tokens by an indexer on The Graph.
+    This Substreams tracks changes in total staked tokens by indexers on The Graph.
 
 imports:
   sql: https://github.com/streamingfast/substreams-sink-sql/releases/download/protodefs-v1.0.7/substreams-sink-sql-protodefs-v1.0.7.spkg
@@ -23,7 +23,7 @@ binaries:
     file: target/wasm32-unknown-unknown/release/allocation_substreams.wasm
 
 params:
-  # list of indexer addresses to track
+  # list of indexer addresses to track. To track all indexers, set to '*'
   map_allocation_closed: '["35917c0eb91d2e21bef40940d028940484230c06"]'
 
 modules:

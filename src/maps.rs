@@ -41,19 +41,29 @@ pub fn map_allocation_closed2(block: Block) -> Result<AllocationClosedDatas, Err
 
 #[substreams::handlers::map]
 pub fn map_allocation_closed(indexers: String, _clock: Clock, allocation_closed1: AllocationClosedDatas, allocation_closed2: AllocationClosedDatas) -> Result<AllocationClosedDatas, Error> {
-    let indexers_list: Vec<String> = serde_json::from_str(&indexers).unwrap();
-    let indexers: std::collections::HashSet<String> = indexers_list.into_iter().collect();
+    let mut all = false;
+    if indexers == "*" {
+        all = true;
+    }
+
+    let indexers_map: std::collections::HashSet<String>;
+    if !all {
+        let indexers_list: Vec<String> = serde_json::from_str(&indexers).unwrap();
+        indexers_map = indexers_list.into_iter().collect();
+    } else {
+        indexers_map = std::collections::HashSet::new();
+    }
 
     let mut res = Vec::new();
 
     allocation_closed1.allocation_closed_datas.iter().for_each(|x| {
-        if indexers.contains(&x.address) {
+        if all || indexers_map.contains(&x.address) {
             res.push(x.clone());
         }
     });
 
     allocation_closed2.allocation_closed_datas.iter().for_each(|x| {
-        if indexers.contains(&x.address) {
+        if all || indexers_map.contains(&x.address) {
             res.push(x.clone());
         }
     });
