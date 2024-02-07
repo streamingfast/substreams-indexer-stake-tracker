@@ -3,6 +3,7 @@ package:
   name: indexer_stake_tracker
   version: v0.0.1
   url: https://github.com/streamingfast/substreams-indexer-stake-tracker
+  image: ./img/thegraph.jpeg
   doc: |
     This Substreams tracks changes in total staked tokens by indexers on The Graph.
 
