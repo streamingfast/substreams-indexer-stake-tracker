@@ -18,3 +18,17 @@ The default parameter is '*' to track all indexers.  To track specific indexers,
 This substreams has a `db_out` module which can be used with the `substreams-sink-sql` to store the data in a SQL database.
 
 For more information on how to deploy this way, refer to https://github.com/streamingfast/substreams-sink-sql
+
+In short:  If you have a postgres database running and the dsn is $DSN, you can deploy this substream with the following command:
+
+```bash
+substreams-sink-sql setup $DSN https://spkg.io/streamingfast/indexer-stake-tracker-v0.0.1.spkg
+```
+
+This will set up the tables on the database.
+
+Then you can deploy the substream with the following command:
+
+```bash
+substreams-sink-sql run $DSN https://spkg.io/streamingfast/indexer-stake-tracker-v0.0.1.spkg
+```
