@@ -12,23 +12,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "allocation-substreams"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "ethabi",
- "hex",
- "num-bigint",
- "prost",
- "prost-build",
- "prost-types",
- "serde_json",
- "substreams",
- "substreams-database-change",
- "substreams-ethereum",
-]
-
-[[package]]
 name = "anyhow"
 version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -848,6 +831,23 @@ dependencies = [
  "quote",
  "substreams-ethereum-abigen",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "substreams-indexer-stake-tracker"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "ethabi",
+ "hex",
+ "num-bigint",
+ "prost",
+ "prost-build",
+ "prost-types",
+ "serde_json",
+ "substreams",
+ "substreams-database-change",
+ "substreams-ethereum",
 ]
 
 [[package]]
