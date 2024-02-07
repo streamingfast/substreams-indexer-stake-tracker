@@ -1,8 +1,8 @@
 specVersion: v0.1.0
 package:
-  name: indexer_allocations_changes
+  name: indexer_stake_tracker
   version: v0.0.1
-  url: https://none.com
+  url: https://github.com/streamingfast/substreams-indexer-stake-tracker
   doc: |
     This Substreams tracks changes in total staked tokens by indexers on The Graph.
 
@@ -24,12 +24,12 @@ binaries:
 
 params:
   # list of indexer addresses to track. To track all indexers, set to '*'
-  map_allocation_closed: '["35917c0eb91d2e21bef40940d028940484230c06"]'
+  map_allocation_closed: '*'
 
 modules:
   - name: map_allocation_closed1
     kind: map
-    initialBlock: 86912470
+    initialBlock: 42449585
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
@@ -37,7 +37,7 @@ modules:
 
   - name: map_allocation_closed2
     kind: map
-    initialBlock: 86912470
+    initialBlock: 42449585
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
@@ -45,7 +45,7 @@ modules:
 
   - name: map_allocation_closed
     kind: map
-    initialBlock: 86912470
+    initialBlock: 42449585
     inputs:
       - params: string
       - source: sf.substreams.v1.Clock
@@ -56,7 +56,7 @@ modules:
 
   - name: map_staked_tokens_changes
     kind: map
-    initialBlock: 86912470
+    initialBlock: 42449585
     inputs:
       - source: sf.substreams.v1.Clock
       - map: map_allocation_closed
