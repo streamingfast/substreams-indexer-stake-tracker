@@ -2,14 +2,13 @@ syntax = "proto3";
 
 package allocations.types.v1;
 
-message StakedTokensChange {
+message OwnedStakeTokenChange {
   string indexer = 1;
-  uint64 blockNumber = 2;
-  string tokens = 3; //big.Int
+  string tokensAmount = 2; //big.Int
 }
 
-message StakedTokensChanges {
-  repeated StakedTokensChange stakedTokensChanges = 1;
+message OwnedStakeTokenChanges {
+  repeated OwnedStakeTokenChange ownedStakeTokenChanges = 1;
 }
 
 message AllocationClosedData {
@@ -18,6 +17,7 @@ message AllocationClosedData {
   string tokens = 3; //big.Int
   string allocationId = 4;
   string poi = 5;
+  string transactionHash = 6;
 }
 
 message AllocationClosedDatas {
@@ -29,4 +29,16 @@ message AllocationClosedResult {
   string allocationId = 2;
   string tokens = 3; //big.Int
   string stake = 5; //big.Int
+}
+
+message StakedTokensChange {
+  string indexer = 1;
+  uint64 blockNumber = 2;
+  string transactionHash = 3;
+  string tokens = 4; //big.Int
+  string stake = 5; //big.Int
+}
+
+message StakedTokensChanges {
+  repeated StakedTokensChange stakedTokensChanges = 1;
 }
