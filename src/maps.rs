@@ -11,33 +11,56 @@ use crate::abi::graph::functions::GetIndexerStakedTokens;
 use crate::pb::allocations::types::v1::{AllocationClosedData, AllocationClosedDatas, OwnedStakeTokenChange, OwnedStakeTokenChanges, StakedTokensChange, StakedTokensChanges};
 use substreams_database_change::pb::database::DatabaseChanges;
 use crate::abi::graph::events::{AllocationClosed1, AllocationClosed2, StakeDeposited, StakeWithdrawn};
+use crate::abi::rewards::events::RewardsAssigned;
+use crate::abi::transfer::events::Transfer;
 use crate::utils::{GRAPH};
 
 #[substreams::handlers::map]
 pub fn map_stake_deposited(block: Block) -> Result<OwnedStakeTokenChanges, Error> {
-    let mut allocation_closed_found = false;
+    let mut owned_stake_token_changes = Vec::new();
 
-    block.events::<AllocationClosed1>(&[&GRAPH]).for_each(|_| {
-        allocation_closed_found = true;
-    });
-    block.events::<AllocationClosed2>(&[&GRAPH]).for_each(|_| {
-        allocation_closed_found = true;
-    });
+    block.transactions().for_each(|tx| {
+        if tx.status != 1 {
+            return;
+        }
 
-    if allocation_closed_found {
-        return Ok(OwnedStakeTokenChanges {
-            owned_stake_token_changes: Vec::new()
+        let mut allocations_closed_found = false;
+        let mut transfer_found = false;
+        let mut rewards_assigned_found = false;
+
+        tx.logs_with_calls().for_each(|(log, _)| {
+            if AllocationClosed1::match_log(log) || AllocationClosed2::match_log(log) {
+                allocations_closed_found = true;
+                return;
+            }
+
+            if RewardsAssigned::match_log(log) {
+                rewards_assigned_found = true;
+                return;
+            }
+
+            if Transfer::match_log(log) {
+                transfer_found = true;
+            }
         });
-    }
+
+        if !allocations_closed_found && !rewards_assigned_found && transfer_found {
+            tx.logs_with_calls().for_each(|(log, _)| {
+                if StakeDeposited::match_log(log) {
+                    let stake_deposited = OwnedStakeTokenChange {
+                        indexer: Hex::encode(&StakeDeposited::decode(log).unwrap().indexer),
+                        tokens_amount: StakeDeposited::decode(log).unwrap().tokens.to_string(),
+                    };
+
+                    owned_stake_token_changes.push(stake_deposited);
+                }
+            });
+        }
+    });
+
 
     Ok(OwnedStakeTokenChanges {
-        owned_stake_token_changes: block.events::<StakeDeposited>(&[&GRAPH]).filter_map(|(event, _)| {
-            let stake_deposited = OwnedStakeTokenChange {
-                indexer: Hex::encode(&event.indexer),
-                tokens_amount: event.tokens.to_string(),
-            };
-            Some(stake_deposited)
-        }).collect()
+        owned_stake_token_changes
     })
 }
 #[substreams::handlers::map]
@@ -54,10 +77,27 @@ pub fn map_stake_withdrawn(block: Block) -> Result<OwnedStakeTokenChanges, Error
 }
 
 #[substreams::handlers::store]
-pub fn store_stake_token_changes(stake_deposited: OwnedStakeTokenChanges, stake_withdrawn: OwnedStakeTokenChanges, store: StoreAddBigInt) {
+pub fn store_stake_token_changes(indexers: String, stake_deposited: OwnedStakeTokenChanges, stake_withdrawn: OwnedStakeTokenChanges, store: StoreAddBigInt) {
+    let mut all = false;
+    if indexers == "*" {
+        all = true;
+    }
+
+    let indexers_map: std::collections::HashSet<String>;
+    if !all {
+        let indexers_list: Vec<String> = serde_json::from_str(&indexers).unwrap();
+        indexers_map = indexers_list.into_iter().collect();
+    } else {
+        indexers_map = std::collections::HashSet::new();
+    }
+
     let mut map : HashMap<String, BigInt> = std::collections::HashMap::new();
 
     stake_deposited.owned_stake_token_changes.iter().for_each(|x| {
+        if !all && !indexers_map.contains(&x.indexer) {
+            return;
+        }
+
         if let Some(val) = map.get_mut(&x.indexer) {
             let a = val.clone();
             let b = BigInt::from_str(&x.tokens_amount).unwrap();
@@ -69,6 +109,10 @@ pub fn store_stake_token_changes(stake_deposited: OwnedStakeTokenChanges, stake_
     });
 
     stake_withdrawn.owned_stake_token_changes.iter().for_each(|x| {
+        if !all && !indexers_map.contains(&x.indexer) {
+            return;
+        }
+
         if let Some(val) = map.get_mut(&x.indexer) {
             let a = val.clone();
             let b = BigInt::from_str(&x.tokens_amount).unwrap();

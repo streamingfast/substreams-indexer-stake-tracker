@@ -8,5 +8,8 @@ fn main() -> Result<(), anyhow::Error> {
     Abigen::new("rewards", "abi/rewards.json")?
         .generate()?
         .write_to_file("src/abi/rewards.rs")?;
+    Abigen::new("transfer", "abi/transfer.json")?
+        .generate()?
+        .write_to_file("src/abi/transfer.rs")?;
     Ok(())
 }
