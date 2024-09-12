@@ -1,7 +1,7 @@
 specVersion: v0.1.0
 package:
   name: indexer_stake_tracker
-  version: v0.0.3
+  version: v0.0.4
   url: https://github.com/streamingfast/substreams-indexer-stake-tracker
   image: ./img/thegraph.jpeg
   doc: |

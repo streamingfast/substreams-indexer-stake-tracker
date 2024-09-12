@@ -29,7 +29,7 @@ pub fn map_query_fees_collected(block: Block) -> Result<QueryFeesCollecteds, Err
                     indexer: Hex::encode(&collection.indexer),
                     deployment_id: Hex::encode(&collection.subgraph_deployment_id),
                     allocation_id: Hex::encode(&collection.allocation_id),
-                    query_fees: collection.query_fees.to_string(),
+                    query_fees: collection.query_rebates.to_string(), //this is not a bug. what is given to the indexer is the "query rebates" field
                 };
                 out.push(query_fees_collected);
             }
