@@ -8,12 +8,45 @@ use substreams::pb::substreams::Clock;
 use substreams::scalar::BigInt;
 use substreams::store::{StoreNew, StoreAdd, StoreAddBigInt, StoreGet, StoreGetBigInt};
 use crate::abi::graph::functions::GetIndexerStakedTokens;
-use crate::pb::allocations::types::v1::{AllocationClosedData, AllocationClosedDatas, OwnedStakeTokenChange, OwnedStakeTokenChanges, StakedTokensChange, StakedTokensChanges};
+use crate::pb::allocations::types::v1::{AllocationClosedData, AllocationClosedDatas, OwnedStakeTokenChange, OwnedStakeTokenChanges, QueryFeesCollected, QueryFeesCollecteds, StakedTokensChange, StakedTokensChanges};
 use substreams_database_change::pb::database::DatabaseChanges;
-use crate::abi::graph::events::{AllocationClosed1, AllocationClosed2, StakeDeposited, StakeWithdrawn};
+use crate::abi::graph::events::{AllocationClosed1, AllocationClosed2, RebateCollected, StakeDeposited, StakeWithdrawn};
 use crate::abi::rewards::events::RewardsAssigned;
 use crate::abi::transfer::events::Transfer;
 use crate::utils::{GRAPH};
+
+
+#[substreams::handlers::map]
+pub fn map_query_fees_collected(block: Block) -> Result<QueryFeesCollecteds, Error> {
+    let mut out = Vec::new();
+
+    block.transactions().for_each(|tx| {
+        // match event RebateCollected
+        tx.logs_with_calls().for_each(|(log, _)| {
+            if log.address == GRAPH && RebateCollected::match_log(log){
+                let collection = RebateCollected::decode(log).unwrap();
+                let query_fees_collected = QueryFeesCollected {
+                    indexer: Hex::encode(&collection.indexer),
+                    deployment_id: Hex::encode(&collection.subgraph_deployment_id),
+                    allocation_id: Hex::encode(&collection.allocation_id),
+                    query_fees: collection.query_fees.to_string(),
+                };
+                out.push(query_fees_collected);
+            }
+        });
+    });
+
+    Ok(QueryFeesCollecteds {
+        query_fees_collecteds: out
+    })
+}
+
+#[substreams::handlers::store]
+pub fn store_query_fees_collected(query_fees_collecteds: QueryFeesCollecteds, store: StoreAddBigInt) {
+    query_fees_collecteds.query_fees_collecteds.iter().for_each(|x| {
+        store.add(0, &x.indexer, &BigInt::from_str(&x.query_fees).unwrap());
+    });
+}
 
 #[substreams::handlers::map]
 pub fn map_stake_deposited(block: Block) -> Result<OwnedStakeTokenChanges, Error> {
@@ -196,7 +229,7 @@ pub fn map_allocation_closed(indexers: String, _clock: Clock, allocation_closed1
 }
 
 #[substreams::handlers::map]
-pub fn map_staked_tokens_changes(clock: Clock, allocation_closed: AllocationClosedDatas, stake_store: StoreGetBigInt) -> Result<StakedTokensChanges, Error> {
+pub fn map_staked_tokens_changes(clock: Clock, allocation_closed: AllocationClosedDatas, stake_store: StoreGetBigInt, query_fees_store: StoreGetBigInt) -> Result<StakedTokensChanges, Error> {
     Ok(StakedTokensChanges {
         staked_tokens_changes: allocation_closed.allocation_closed_datas.iter().filter_map(|allocation_closed| {
             let st = GetIndexerStakedTokens {
@@ -209,6 +242,7 @@ pub fn map_staked_tokens_changes(clock: Clock, allocation_closed: AllocationClos
                     transaction_hash: allocation_closed.transaction_hash.clone(),
                     tokens: x.to_string(),
                     stake: stake_store.get_last(&allocation_closed.address).unwrap_or(BigInt::zero()).to_string(),
+                    query_fees: query_fees_store.get_last(&allocation_closed.address).unwrap_or(BigInt::zero()).to_string(),
                 })
             } else {
                 None
@@ -228,6 +262,7 @@ pub fn db_out(clock: Clock, staked_tokens_changes: StakedTokensChanges) -> Resul
             .set("indexer", staked_tokens_change.indexer)
             .set("tokens", staked_tokens_change.tokens)
             .set("staked_tokens", staked_tokens_change.stake)
+            .set("query_fees", staked_tokens_change.query_fees)
             .set("block_timestamp", &timestamp);
     }
 

@@ -1,7 +1,7 @@
 specVersion: v0.1.0
 package:
   name: indexer_stake_tracker
-  version: v0.0.2
+  version: v0.0.3
   url: https://github.com/streamingfast/substreams-indexer-stake-tracker
   image: ./img/thegraph.jpeg
   doc: |
@@ -17,6 +17,9 @@ protobuf:
     - allocations/v1/allocations.proto
   importPaths:
     - ./proto
+  excludePaths:
+    - sf/substreams
+    - google
 
 binaries:
   default:
@@ -81,6 +84,21 @@ modules:
     output:
       type: proto:allocations.types.v1.AllocationClosedDatas
 
+  - name: map_query_fees_collected
+    kind: map
+    initialBlock: 42449585
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+        type: proto:allocations.types.v1.QueryFeesCollecteds
+
+  - name: store_query_fees_collected
+    kind: store
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_query_fees_collected
+
   - name: map_staked_tokens_changes
     kind: map
     initialBlock: 42449585
@@ -88,6 +106,7 @@ modules:
       - source: sf.substreams.v1.Clock
       - map: map_allocation_closed
       - store: store_stake_token_changes
+      - store: store_query_fees_collected
     output:
       type: proto:allocations.types.v1.StakedTokensChanges
 

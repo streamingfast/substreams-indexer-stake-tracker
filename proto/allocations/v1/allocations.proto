@@ -37,8 +37,20 @@ message StakedTokensChange {
   string transactionHash = 3;
   string tokens = 4; //big.Int
   string stake = 5; //big.Int
+  string queryFees = 6; //big.Int
 }
 
 message StakedTokensChanges {
   repeated StakedTokensChange stakedTokensChanges = 1;
+}
+
+message QueryFeesCollected {
+  string indexer = 1;
+  string deploymentId = 2;
+  string allocationId = 3;
+  string queryFees = 4; //big.Int
+}
+
+message QueryFeesCollecteds {
+  repeated QueryFeesCollected queryFeesCollecteds = 1;
 }
