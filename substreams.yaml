@@ -28,13 +28,17 @@ binaries:
 
 params:
   # list of indexer addresses to track. To track all indexers, set to '*'
-  map_allocation_closed: '*'
-  store_stake_token_changes: '*'
+  map_allocation_closed: '["35917c0eb91d2e21bef40940d028940484230c06"]'
+  store_stake_token_changes: '["35917c0eb91d2e21bef40940d028940484230c06"]'
+  map_query_fees_collected: '["35917c0eb91d2e21bef40940d028940484230c06"]'
+#  map_allocation_closed: '*'
+#  store_stake_token_changes: '*'
+#  map_query_fees_collected: '*'
 
 modules:
   - name: map_stake_deposited
     kind: map
-    initialBlock: 42449585
+    initialBlock: 86288639
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
@@ -42,7 +46,7 @@ modules:
 
   - name: map_stake_withdrawn
     kind: map
-    initialBlock: 42449585
+    initialBlock: 86288639
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
@@ -59,7 +63,7 @@ modules:
 
   - name: map_allocation_closed1
     kind: map
-    initialBlock: 42449585
+    initialBlock: 86288639
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
@@ -67,7 +71,7 @@ modules:
 
   - name: map_allocation_closed2
     kind: map
-    initialBlock: 42449585
+    initialBlock: 86288639
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
@@ -75,7 +79,7 @@ modules:
 
   - name: map_allocation_closed
     kind: map
-    initialBlock: 42449585
+    initialBlock: 86288639
     inputs:
       - params: string
       - source: sf.substreams.v1.Clock
@@ -86,8 +90,9 @@ modules:
 
   - name: map_query_fees_collected
     kind: map
-    initialBlock: 42449585
+    initialBlock: 86288639
     inputs:
+      - params: string
       - source: sf.ethereum.type.v2.Block
     output:
         type: proto:allocations.types.v1.QueryFeesCollecteds
@@ -101,7 +106,7 @@ modules:
 
   - name: map_staked_tokens_changes
     kind: map
-    initialBlock: 42449585
+    initialBlock: 86288639
     inputs:
       - source: sf.substreams.v1.Clock
       - map: map_allocation_closed

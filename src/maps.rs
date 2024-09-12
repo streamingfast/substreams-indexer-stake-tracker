@@ -3,7 +3,7 @@ use std::ops::Add;
 use std::str::FromStr;
 use substreams_ethereum::pb::eth::v2::Block;
 use substreams::errors::Error;
-use substreams::{Hex};
+use substreams::{log, Hex};
 use substreams::pb::substreams::Clock;
 use substreams::scalar::BigInt;
 use substreams::store::{StoreNew, StoreAdd, StoreAddBigInt, StoreGet, StoreGetBigInt};
@@ -17,8 +17,21 @@ use crate::utils::{GRAPH};
 
 
 #[substreams::handlers::map]
-pub fn map_query_fees_collected(block: Block) -> Result<QueryFeesCollecteds, Error> {
+pub fn map_query_fees_collected(indexers: String, block: Block) -> Result<QueryFeesCollecteds, Error> {
     let mut out = Vec::new();
+
+    let mut all = false;
+    if indexers == "*" {
+        all = true;
+    }
+
+    let indexers_map: std::collections::HashSet<String>;
+    if !all {
+        let indexers_list: Vec<String> = serde_json::from_str(&indexers).unwrap();
+        indexers_map = indexers_list.into_iter().collect();
+    } else {
+        indexers_map = std::collections::HashSet::new();
+    }
 
     block.transactions().for_each(|tx| {
         // match event RebateCollected
@@ -31,6 +44,12 @@ pub fn map_query_fees_collected(block: Block) -> Result<QueryFeesCollecteds, Err
                     allocation_id: Hex::encode(&collection.allocation_id),
                     query_fees: collection.query_rebates.to_string(), //this is not a bug. what is given to the indexer is the "query rebates" field
                 };
+
+                if !all && !indexers_map.contains(&query_fees_collected.indexer) {
+                    return;
+                }
+
+                log::info!("map_query_fees_collected: indexer: {}, query_fees: {}", query_fees_collected.indexer, query_fees_collected.query_fees);
                 out.push(query_fees_collected);
             }
         });
@@ -44,7 +63,8 @@ pub fn map_query_fees_collected(block: Block) -> Result<QueryFeesCollecteds, Err
 #[substreams::handlers::store]
 pub fn store_query_fees_collected(query_fees_collecteds: QueryFeesCollecteds, store: StoreAddBigInt) {
     query_fees_collecteds.query_fees_collecteds.iter().for_each(|x| {
-        store.add(0, &x.indexer, &BigInt::from_str(&x.query_fees).unwrap());
+        log::info!("store_query_fees_collected: indexer: {}, query_fees: {}", x.indexer, x.query_fees);
+        store.add(0, &x.indexer, &BigInt::from_str(&x.query_fees).unwrap_or(BigInt::zero()));
     });
 }
 
@@ -137,7 +157,7 @@ pub fn store_stake_token_changes(indexers: String, stake_deposited: OwnedStakeTo
             let new_value = a.add(b);
             map.insert(x.indexer.clone(), new_value.clone());
         } else {
-            map.insert(x.indexer.clone(), BigInt::from_str(&x.tokens_amount).unwrap_or(BigInt::zero()));
+            map.insert(x.indexer.clone().to_lowercase(), BigInt::from_str(&x.tokens_amount).unwrap_or(BigInt::zero()));
         }
     });
 
@@ -152,7 +172,7 @@ pub fn store_stake_token_changes(indexers: String, stake_deposited: OwnedStakeTo
             let new_value = a.add(b);
             map.insert(x.indexer.clone(), new_value.clone());
         } else {
-            map.insert(x.indexer.clone(), BigInt::from_str(&x.tokens_amount).unwrap_or(BigInt::zero()));
+            map.insert(x.indexer.clone().to_lowercase(), BigInt::from_str(&x.tokens_amount).unwrap_or(BigInt::zero()));
         }
     });
 
@@ -182,7 +202,7 @@ pub fn map_allocation_closed2(block: Block) -> Result<AllocationClosedDatas, Err
     Ok(AllocationClosedDatas {
         allocation_closed_datas: block.events::<AllocationClosed2>(&[&GRAPH]).filter_map(|(event, log)| {
             let allocation_closed = AllocationClosedData {
-                address: Hex::encode(&event.indexer),
+                address: Hex::encode(&event.indexer).to_lowercase(),
                 deployment_id: Hex::encode(&event.subgraph_deployment_id),
                 tokens: event.tokens.to_string(),
                 allocation_id: Hex::encode(&event.allocation_id),
@@ -237,12 +257,12 @@ pub fn map_staked_tokens_changes(clock: Clock, allocation_closed: AllocationClos
             };
             if let Some(x) = st.call(GRAPH.to_vec()) {
                 Some(StakedTokensChange {
-                    indexer: allocation_closed.address.clone(),
+                    indexer: allocation_closed.address.clone().to_lowercase(),
                     block_number: clock.number,
                     transaction_hash: allocation_closed.transaction_hash.clone(),
                     tokens: x.to_string(),
-                    stake: stake_store.get_last(&allocation_closed.address).unwrap_or(BigInt::zero()).to_string(),
-                    query_fees: query_fees_store.get_last(&allocation_closed.address).unwrap_or(BigInt::zero()).to_string(),
+                    stake: stake_store.get_last(&allocation_closed.address.to_lowercase()).unwrap_or(BigInt::zero()).to_string(),
+                    query_fees: query_fees_store.get_last(&allocation_closed.address.to_lowercase()).unwrap_or(BigInt::zero()).to_string(),
                 })
             } else {
                 None
