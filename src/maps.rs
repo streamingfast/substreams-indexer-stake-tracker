@@ -9,7 +9,7 @@ use crate::pb::allocations::types::v1::{
     IndexingRewardsCollecteds, OwnedStakeTokenChange, OwnedStakeTokenChanges, QueryFeesCollected,
     QueryFeesCollecteds, StakedTokensChange, StakedTokensChanges,
 };
-use crate::utils::{GRAPH, NULL};
+use crate::utils::GRAPH;
 use std::collections::HashMap;
 use std::ops::Add;
 use std::str::FromStr;
@@ -93,29 +93,40 @@ pub fn map_indexing_rewards_collected(
     }
 
     block.transactions().for_each(|tx| {
-        let mut transfer_values: Vec<String> = Vec::new();
+        let mut match_graph_address = false;
+        let mut rewards_assigned_found = false;
+        let mut transfer_found = false;
+
         tx.logs_with_calls().for_each(|(log, _)| {
+            if log.address == GRAPH {
+                match_graph_address = true;
+            }
+
+            if RewardsAssigned::match_log(log) {
+                rewards_assigned_found = true;
+                return;
+            }
+
             if Transfer::match_log(log) {
-                let transfer = Transfer::decode(log).unwrap();
-                if transfer.from == NULL {
-                    return; // mint
-                }
-                transfer_values.push(transfer.value.to_string());
+                transfer_found = true;
             }
         });
 
-        let mut transfer_idx = 0;
+        if !match_graph_address || !rewards_assigned_found || !transfer_found {
+            return;
+        }
 
-        // match event RebateCollected
         tx.logs_with_calls().for_each(|(log, _)| {
-            if RewardsAssigned::match_log(log) {
-                let reward = RewardsAssigned::decode(log).unwrap();
+            if Transfer::match_log(log) {
+                let transfer = Transfer::decode(log).unwrap();
+                if transfer.from != GRAPH {
+                    return;
+                }
+
                 let indexing_rewards_collected = IndexingRewardsCollected {
-                    indexer: Hex::encode(&reward.indexer),
-                    allocation_id: Hex::encode(&reward.allocation_id),
-                    rewards: transfer_values[transfer_idx].clone(),
+                    indexer: Hex::encode(&transfer.to),
+                    rewards: transfer.value.to_string(),
                 };
-                transfer_idx += 1;
                 if !all && !indexers_map.contains(&indexing_rewards_collected.indexer) {
                     return;
                 }

@@ -58,8 +58,7 @@ message QueryFeesCollecteds {
 
 message IndexingRewardsCollected {
   string indexer = 1;
-  string allocationId = 2;
-  string rewards = 3; //big.Int
+  string rewards = 2; //big.Int
 }
 
 message IndexingRewardsCollecteds {

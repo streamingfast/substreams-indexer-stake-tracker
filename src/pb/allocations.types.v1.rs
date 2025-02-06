@@ -103,10 +103,8 @@ pub struct QueryFeesCollecteds {
 pub struct IndexingRewardsCollected {
     #[prost(string, tag="1")]
     pub indexer: ::prost::alloc::string::String,
-    #[prost(string, tag="2")]
-    pub allocation_id: ::prost::alloc::string::String,
     /// big.Int
-    #[prost(string, tag="3")]
+    #[prost(string, tag="2")]
     pub rewards: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
