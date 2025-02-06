@@ -1,3 +1,4 @@
 /target
 *.spkg
 *.log
+.DS_Store

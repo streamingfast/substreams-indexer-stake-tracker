@@ -19,6 +19,12 @@ This substreams has a `db_out` module which can be used with the `substreams-sin
 
 For more information on how to deploy this way, refer to https://github.com/streamingfast/substreams-sink-sql
 
+You can use `devel/up.sh` (`rm -rf devel/data` if you want) and you will get an instance with this DSN:
+
+```
+DSN=psql://dev-node:insecure-change-me-in-prod@localhost:5432/dev-node?sslmode=disable
+```
+
 In short:  If you have a postgres database running and the dsn is $DSN, you can deploy this substream with the following command:
 
 ```bash
