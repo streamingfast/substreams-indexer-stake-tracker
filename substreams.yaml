@@ -11,6 +11,7 @@ imports:
   sql: https://github.com/streamingfast/substreams-sink-sql/releases/download/protodefs-v1.0.7/substreams-sink-sql-protodefs-v1.0.7.spkg
   entity: https://github.com/streamingfast/substreams-entity-change/releases/download/v1.1.0/substreams-entity-change-v1.1.0.spkg
   database_change: https://github.com/streamingfast/substreams-sink-database-changes/releases/download/v1.2.0/substreams-database-change-v1.2.0.spkg
+  eth: https://spkg.io/v1/packages/ethereum_common/v0.3.0
 
 protobuf:
   files:
@@ -31,6 +32,7 @@ params:
   map_allocation_closed: '["35917c0eb91d2e21bef40940d028940484230c06"]'
   store_stake_token_changes: '["35917c0eb91d2e21bef40940d028940484230c06"]'
   map_query_fees_collected: '["35917c0eb91d2e21bef40940d028940484230c06"]'
+  map_indexing_rewards_collected: '["35917c0eb91d2e21bef40940d028940484230c06"]'
 #  map_allocation_closed: '*'
 #  store_stake_token_changes: '*'
 #  map_query_fees_collected: '*'
@@ -38,6 +40,10 @@ params:
 modules:
   - name: map_stake_deposited
     kind: map
+    blockFilter:
+      module: eth:index_events
+      query:
+        string: evt_addr:0x00669a4cf01450b64e8a2a20e9b1fcb71e61ef03
     initialBlock: 86288639
     inputs:
       - source: sf.ethereum.type.v2.Block
@@ -47,6 +53,10 @@ modules:
   - name: map_stake_withdrawn
     kind: map
     initialBlock: 86288639
+    blockFilter:
+      module: eth:index_events
+      query:
+        string: evt_addr:0x00669a4cf01450b64e8a2a20e9b1fcb71e61ef03
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
@@ -64,6 +74,10 @@ modules:
   - name: map_allocation_closed1
     kind: map
     initialBlock: 86288639
+    blockFilter:
+      module: eth:index_events
+      query:
+        string: evt_addr:0x00669a4cf01450b64e8a2a20e9b1fcb71e61ef03
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
@@ -72,6 +86,10 @@ modules:
   - name: map_allocation_closed2
     kind: map
     initialBlock: 86288639
+    blockFilter:
+      module: eth:index_events
+      query:
+        string: evt_addr:0x00669a4cf01450b64e8a2a20e9b1fcb71e61ef03
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
@@ -91,11 +109,28 @@ modules:
   - name: map_query_fees_collected
     kind: map
     initialBlock: 86288639
+    blockFilter:
+      module: eth:index_events
+      query:
+        string: evt_addr:0x00669a4cf01450b64e8a2a20e9b1fcb71e61ef03
     inputs:
       - params: string
       - source: sf.ethereum.type.v2.Block
     output:
-        type: proto:allocations.types.v1.QueryFeesCollecteds
+      type: proto:allocations.types.v1.QueryFeesCollecteds
+
+  - name: map_indexing_rewards_collected
+    kind: map
+    initialBlock: 86288639
+    blockFilter:
+      module: eth:index_events
+      query:
+        string: evt_addr:0x00669a4cf01450b64e8a2a20e9b1fcb71e61ef03
+    inputs:
+      - params: string
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:allocations.types.v1.IndexingRewardsCollecteds
 
   - name: store_query_fees_collected
     kind: store
@@ -103,6 +138,13 @@ modules:
     valueType: bigint
     inputs:
       - map: map_query_fees_collected
+
+  - name: store_indexing_rewards_collected
+    kind: store
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_indexing_rewards_collected
 
   - name: map_staked_tokens_changes
     kind: map
@@ -112,6 +154,7 @@ modules:
       - map: map_allocation_closed
       - store: store_stake_token_changes
       - store: store_query_fees_collected
+      - store: store_indexing_rewards_collected
     output:
       type: proto:allocations.types.v1.StakedTokensChanges
 

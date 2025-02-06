@@ -69,6 +69,9 @@ pub struct StakedTokensChange {
     /// big.Int
     #[prost(string, tag="6")]
     pub query_fees: ::prost::alloc::string::String,
+    /// big.Int
+    #[prost(string, tag="7")]
+    pub indexing_rewards: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -94,5 +97,22 @@ pub struct QueryFeesCollected {
 pub struct QueryFeesCollecteds {
     #[prost(message, repeated, tag="1")]
     pub query_fees_collecteds: ::prost::alloc::vec::Vec<QueryFeesCollected>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IndexingRewardsCollected {
+    #[prost(string, tag="1")]
+    pub indexer: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub allocation_id: ::prost::alloc::string::String,
+    /// big.Int
+    #[prost(string, tag="3")]
+    pub rewards: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct IndexingRewardsCollecteds {
+    #[prost(message, repeated, tag="1")]
+    pub indexing_rewards_collecteds: ::prost::alloc::vec::Vec<IndexingRewardsCollected>,
 }
 // @@protoc_insertion_point(module)

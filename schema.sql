@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS staked_tokens_changes (
     "tokens" NUMERIC,
     "staked_tokens" NUMERIC,
     "query_fees" NUMERIC,
+    "indexing_rewards" NUMERIC,
     "block_number" DECIMAL,
     "transaction_hash" VARCHAR(64),
     "block_timestamp" TIMESTAMP,
