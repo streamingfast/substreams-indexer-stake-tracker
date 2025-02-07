@@ -38,3 +38,9 @@ Then you can deploy the substream with the following command:
 ```bash
 substreams-sink-sql run $DSN https://spkg.io/streamingfast/indexer-stake-tracker-v0.0.1.spkg
 ```
+
+Then you can extract the data like this:
+```
+today=$(date +%Y-%m-%d)
+psql2csv --host 127.0.0.1 -W  -U dev-node dev-node "select * from staked_tokens_changes" > indexer-rewards-stakes-${today}.csv
+```
